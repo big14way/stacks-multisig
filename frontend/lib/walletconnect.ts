@@ -3,9 +3,11 @@ import QRCodeModal from "@walletconnect/qrcode-modal";
 import { PostConditionMode } from "@stacks/transactions";
 
 // BigInt serialization fix
-BigInt.prototype.toJSON = function () {
-  return this.toString();
-};
+if (typeof BigInt.prototype.toJSON === "undefined") {
+  BigInt.prototype.toJSON = function () {
+    return this.toString();
+  };
+}
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "1eebe528ca0ce94a99ceaa2e915058d7";
 
