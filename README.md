@@ -2,6 +2,10 @@
 
 Code for the [LearnWeb3](https://learnweb3.io) course about building a Multisig contract. Part of the [Stacks Developer Degree](https://learnweb3.io/degrees/stacks-developer-degree).
 
+## Live Demo
+
+**[View Live Application](https://frontend-8s09wz0ua-big14ways-projects.vercel.app)** 🚀
+
 ## WalletConnect Integration
 
 This project now includes a modern Next.js frontend with **WalletConnect v2** integration, allowing users to connect their Stacks wallets seamlessly.
