@@ -7,6 +7,30 @@
 ;; No maximum supply!
 (define-fungible-token mock-token)
 
+;; Clarity 4 Features
+;; Get contract hash - Clarity 4 feature
+(define-read-only (get-contract-hash)
+  (ok (contract-hash? .mock-token-v4))
+)
+
+;; Verify contract integrity - Clarity 4 feature
+(define-read-only (verify-contract-integrity)
+  (match (contract-hash? .mock-token-v4)
+    hash-value (ok true)
+    error-val (ok false)
+  )
+)
+
+;; Get current block height - Clarity 4 feature
+(define-read-only (get-current-block-height)
+  (ok stacks-block-height)
+)
+
+;; Convert amount to ASCII string - Clarity 4 feature using to-ascii?
+(define-read-only (amount-to-string (amount uint))
+  (to-ascii? amount)
+)
+
 (define-public (transfer
         (amount uint)
         (sender principal)

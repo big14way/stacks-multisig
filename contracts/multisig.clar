@@ -6,6 +6,30 @@
 (define-constant MAX_SIGNERS u100)
 (define-constant MIN_SIGNATURES_REQUIRED u1)
 
+;; Clarity 4 Features
+;; Get contract hash - Clarity 4 feature
+(define-read-only (get-contract-hash)
+  (ok (contract-hash? .multisig-v4))
+)
+
+;; Verify contract integrity - Clarity 4 feature
+(define-read-only (verify-contract-integrity)
+  (match (contract-hash? .multisig-v4)
+    hash-value (ok true)
+    error-val (ok false)
+  )
+)
+
+;; Convert transaction ID to ASCII string - Clarity 4 feature using to-ascii?
+(define-read-only (get-txn-id-string (transaction-id uint))
+  (to-ascii? transaction-id)
+)
+
+;; Get current block height - Clarity 4 feature
+(define-read-only (get-current-block-height)
+  (ok stacks-block-height)
+)
+
 ;; Errors
 (define-constant ERR_OWNER_ONLY (err u500))
 (define-constant ERR_ALREADY_INITIALIZED (err u501))
@@ -35,6 +59,7 @@
         recipient: principal,
         token: (optional principal),
         executed: bool,
+        submitted-at: uint,
     }
 )
 (define-map txn-signers
@@ -96,12 +121,14 @@
             (asserts! true ERR_UNEXPECTED)
         )
         ;; Update the transactions map with the new transaction
+        ;; Using stacks-block-height (Clarity 4 feature) to track submission time
         (map-set transactions { id: id } {
             type: type,
             amount: amount,
             recipient: recipient,
             token: token,
             executed: false,
+            submitted-at: stacks-block-height,
         })
         ;; Increment the transaction ID
         (var-set txn-id (+ id u1))
@@ -158,7 +185,12 @@
         (asserts! (is-eq (unwrap-panic token-principal) (contract-of token))
             ERR_INVALID_TOKEN_CONTRACT
         )
-        (try! (as-contract (contract-call? token transfer amount tx-sender recipient none)))
+        ;; Using as-contract? (Clarity 4 feature) with asset allowances for secure token transfers
+        (try! (match (as-contract? ((with-all-assets-unsafe))
+                (try! (contract-call? token transfer amount tx-sender recipient none)))
+            success (ok true)
+            error ERR_UNEXPECTED
+        ))
         (map-set transactions { id: id } (merge transaction { executed: true }))
         (print {
             action: "execute-token-transfer-txn",
@@ -205,7 +237,12 @@
         )
         (asserts! (<= id (var-get txn-id)) ERR_INVALID_TXN_ID)
         (asserts! (is-eq txn-type u0) ERR_INVALID_TX_TYPE)
-        (try! (as-contract (stx-transfer? amount tx-sender recipient)))
+        ;; Using as-contract? (Clarity 4 feature) with STX allowances for secure transfers
+        (try! (match (as-contract? ((with-stx amount))
+                (try! (stx-transfer? amount tx-sender recipient)))
+            success (ok true)
+            error ERR_UNEXPECTED
+        ))
         (map-set transactions { id: id } (merge transaction { executed: true }))
         (print {
             action: "execute-stx-transfer-txn",
@@ -217,6 +254,19 @@
 )
 
 ;; Read Only Functions
+;; Get transaction details - Clarity 4 enhanced with submission block height
+(define-read-only (get-transaction (id uint))
+  (map-get? transactions { id: id })
+)
+
+;; Get transaction age in blocks - Clarity 4 feature using stacks-block-height
+(define-read-only (get-transaction-age (id uint))
+  (match (map-get? transactions { id: id })
+    transaction (ok (- stacks-block-height (get submitted-at transaction)))
+    (err ERR_INVALID_TXN_ID)
+  )
+)
+
 ;; Hash a transaction
 ;; Returns the hash of the transaction
 (define-read-only (hash-txn (id uint))

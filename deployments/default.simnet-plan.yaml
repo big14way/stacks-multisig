@@ -58,6 +58,7 @@ genesis:
     - pox-4
     - signers
     - signers-voting
+    - costs-4
 plan:
   batches:
     - id: 0
@@ -71,13 +72,13 @@ plan:
     - id: 1
       transactions:
         - emulated-contract-publish:
-            contract-name: mock-token
+            contract-name: mock-token-v4
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/mock-token.clar
-            clarity-version: 3
+            clarity-version: 4
         - emulated-contract-publish:
-            contract-name: multisig
+            contract-name: multisig-v4
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/multisig.clar
-            clarity-version: 3
-      epoch: "3.1"
+            clarity-version: 4
+      epoch: "3.3"
